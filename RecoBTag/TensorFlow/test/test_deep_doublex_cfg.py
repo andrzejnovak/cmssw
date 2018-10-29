@@ -2,12 +2,6 @@
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
 
-from FWCore.ParameterSet.VarParsing import VarParsing
-options = VarParsing('analysis')
-options.inputFiles = '/store/mc/RunIIFall17MiniAOD/ZprimeToWWToWlepWhad_narrow_M-3000_TuneCP5_13TeV-madgraph/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/3E25D208-8205-E811-8858-3417EBE64426.root'
-options.maxEvents = -1
-options.parseArguments()
-
 process = cms.Process("PATtest")
 
 ## MessageLogger
@@ -20,10 +14,10 @@ process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 
 ## Source
 process.source = cms.Source("PoolSource",
-    fileNames=cms.untracked.vstring(options.inputFiles)
+    fileNames = cms.untracked.vstring()
 )
 ## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet(input=cms.untracked.int32(options.maxEvents))
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
 process.load("Configuration.Geometry.GeometryRecoDB_cff")
@@ -48,7 +42,6 @@ process.outpath = cms.EndPath(process.out, patAlgosToolsTask)
 
 ## and add them to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
-from RecoBTag.MXNet.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
 
 updateJetCollection(
    process,
@@ -56,9 +49,28 @@ updateJetCollection(
    pvSource = cms.InputTag('offlineSlimmedPrimaryVertices'),
    svSource = cms.InputTag('slimmedSecondaryVertices'),
    rParam = 0.8,
-   jetCorrections = ('AK8PFPuppi', cms.vstring(['L2Relative', 'L3Absolute']), 'None'),
-   btagDiscriminators = pfDeepBoostedJetTagsAll
+   jetCorrections = ('AK8PFchs', cms.vstring(['L2Relative', 'L3Absolute']), 'None'),
+   btagDiscriminators = [
+      'pfBoostedDoubleSecondaryVertexAK8BJetTags',
+      'pfDeepDoubleBvLJetTags:probQCD', 
+      'pfDeepDoubleBvLJetTags:probHbb',
+      'pfDeepDoubleCvLJetTags:probQCD',
+      'pfDeepDoubleCvLJetTags:probHcc',
+      'pfDeepDoubleCvBJetTags:probHbb',
+      'pfDeepDoubleCvBJetTags:probHcc'
+      ]
    )
+
+from PhysicsTools.PatAlgos.patInputFiles_cff import filesRelValTTbarPileUpMINIAODSIM
+
+process.source.fileNames = filesRelValTTbarPileUpMINIAODSIM
+process.source.fileNames = cms.untracked.vstring(
+'root://cmsxrootd.fnal.gov//store/relval/CMSSW_10_3_0_pre2/RelValTTbar_13/MINIAODSIM/PU25ns_103X_upgrade2018_realistic_v2-v1/20000/85820ACA-657B-BC44-AC74-AACD6D54B348.root'
+#'root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAOD/GluGluHToBB_M125_13TeV_powheg_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/C8932584-5006-E811-9840-141877410512.root',
+#'root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAODv2/GluGluHToCC_M125_13TeV_powheg_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/30000/72164088-CB67-E811-9D0D-008CFA197AC4.root',
+#'root://cmsxrootd.fnal.gov//store/mc/RunIIFall17MiniAOD/QCD_HT700to1000_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/C0F304A4-23FA-E711-942E-E0071B6CAD20.root'
+)
+process.maxEvents.input = -1 
 
 from Configuration.EventContent.EventContent_cff import MINIAODSIMEventContent
 process.out.outputCommands.append('keep *_slimmedJetsAK8*_*_*')
@@ -66,9 +78,11 @@ process.out.outputCommands.append('keep *_offlineSlimmedPrimaryVertices*_*_*')
 process.out.outputCommands.append('keep *_slimmedSecondaryVertices*_*_*')
 process.out.outputCommands.append('keep *_selectedPatJets*_*_*')
 process.out.outputCommands.append('keep *_selectedUpdatedPatJets*_*_*')
+process.out.outputCommands.append('keep *_pfBoostedDoubleSVAK8TagInfos*_*_*')
+process.out.outputCommands.append('keep *_pfDeepDoubleXTagInfos*_*_*')
 process.out.outputCommands.append('keep *_updatedPatJets*_*_*')
 
-process.out.fileName = 'test_deep_boosted_jet_MINIAODSIM.root'
+process.out.fileName = 'output_test_DDX.root'
 
 #                                         ##
 #   process.options.wantSummary = False   ##  (to suppress the long output at the end of the job)
