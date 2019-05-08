@@ -155,6 +155,50 @@ def nanoAOD_addDeepBTagFor80X(process):
     return process
 def nanoAOD_addDeepFlavourTagFor94X2016(process):
     print "Updating process to run DeepFlavour btag on legacy 80X datasets"
+
+from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+#from PhysicsTools.PatAlgos.slimming.puppiForMET_cff import makePuppiesFromMiniAOD
+def nanoAOD_recalibrateMETs(process,isData):
+    runMetCorAndUncFromMiniAOD(process,isData=isData)
+    process.nanoSequenceCommon.insert(process.nanoSequenceCommon.index(jetSequence),cms.Sequence(process.fullPatMetSequence))
+#    makePuppiesFromMiniAOD(process,True) # call this before in the global customizer otherwise it would reset photon IDs in VID
+#    runMetCorAndUncFromMiniAOD(process,isData=isData,metType="Puppi",postfix="Puppi",jetFlavor="AK4PFPuppi")
+#    process.puppiNoLep.useExistingWeights = False
+#    process.puppi.useExistingWeights = False
+#    process.nanoSequenceCommon.insert(process.nanoSequenceCommon.index(jetSequence),cms.Sequence(process.puppiMETSequence+process.fullPatMetSequencePuppi))
+    return process
+
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+def nanoAOD_activateVID(process):
+    switchOnVIDElectronIdProducer(process,DataFormat.MiniAOD)
+    for modname in electron_id_modules_WorkingPoints_nanoAOD.modules:
+        setupAllVIDIdsInModule(process,modname,setupVIDElectronSelection)
+    process.electronSequence.insert(process.electronSequence.index(bitmapVIDForEle),process.egmGsfElectronIDSequence)
+    for modifier in run2_miniAOD_80XLegacy, :
+        modifier.toModify(process.electronMVAValueMapProducer, srcMiniAOD = "slimmedElectronsUpdated")
+        modifier.toModify(process.egmGsfElectronIDs, physicsObjectSrc = "slimmedElectronsUpdated")
+        if hasattr(process,"heepIDVarValueMaps"):
+            modifier.toModify(process.heepIDVarValueMaps, elesMiniAOD = "slimmedElectronsUpdated")
+    switchOnVIDPhotonIdProducer(process,DataFormat.MiniAOD) # do not call this to avoid resetting photon IDs in VID, if called before inside makePuppiesFromMiniAOD
+    for modname in photon_id_modules_WorkingPoints_nanoAOD.modules:
+        setupAllVIDIdsInModule(process,modname,setupVIDPhotonSelection)
+    process.photonSequence.insert(process.photonSequence.index(bitmapVIDForPho),process.egmPhotonIDSequence)
+    return process
+
+def nanoAOD_addDeepInfoAK8(process,addDeepBTag,addDeepBoostedJet, addDeepDoubleX, jecPayload):
+    _btagDiscriminators=[]
+    if addDeepBTag:
+        print("Updating process to run DeepCSV btag to AK8 jets")
+        _btagDiscriminators += ['pfDeepCSVJetTags:probb','pfDeepCSVJetTags:probbb']
+    if addDeepBoostedJet:
+        print("Updating process to run DeepBoostedJet on datasets before 103X")
+        from RecoBTag.MXNet.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
+        _btagDiscriminators += pfDeepBoostedJetTagsAll
+    if addDeepDoubleX: 
+        print("Updating process to run DeepDoubleX on datasets before 104X")
+        _btagDiscriminators += ['pfMassIndependentDeepDoubleBvLJetTags:probHbb', 'pfMassIndependentDeepDoubleCvLJetTags:probHcc', 'pfMassIndependentDeepDoubleCvBJetTags:probHcc']
+    if len(_btagDiscriminators)==0: return process
+    print("Will recalculate the following discriminators on AK8 jets: "+", ".join(_btagDiscriminators))
     updateJetCollection(
                process,
                jetSource = cms.InputTag('slimmedJets'),
@@ -181,6 +225,35 @@ def nanoAOD_addDeepFlavourTagFor94X2016(process):
 def nanoAOD_customizeCommon(process):
     run2_miniAOD_80XLegacy.toModify(process, nanoAOD_addDeepBTagFor80X)
     run2_nanoAOD_94X2016.toModify(process, nanoAOD_addDeepFlavourTagFor94X2016)
+#    makePuppiesFromMiniAOD(process,True) # call this here as it calls switchOnVIDPhotonIdProducer
+    process = nanoAOD_activateVID(process)
+    nanoAOD_addDeepInfo_switch = cms.PSet(
+        nanoAOD_addDeepBTag_switch = cms.untracked.bool(False),
+        nanoAOD_addDeepFlavourTag_switch = cms.untracked.bool(False),
+        )
+    run2_miniAOD_80XLegacy.toModify(nanoAOD_addDeepInfo_switch, nanoAOD_addDeepBTag_switch = cms.untracked.bool(True))
+    for modifier in run2_miniAOD_80XLegacy, run2_nanoAOD_94X2016, run2_nanoAOD_94XMiniAODv1, run2_nanoAOD_94XMiniAODv2:
+        modifier.toModify(nanoAOD_addDeepInfo_switch, nanoAOD_addDeepFlavourTag_switch =  cms.untracked.bool(True))
+    process = nanoAOD_addDeepInfo(process,
+                                  addDeepBTag=nanoAOD_addDeepInfo_switch.nanoAOD_addDeepBTag_switch,
+                                  addDeepFlavour=nanoAOD_addDeepInfo_switch.nanoAOD_addDeepFlavourTag_switch)
+    nanoAOD_addDeepInfoAK8_switch = cms.PSet(
+        nanoAOD_addDeepBTag_switch = cms.untracked.bool(False),
+        nanoAOD_addDeepBoostedJet_switch = cms.untracked.bool(True), # will deactivate this in future miniAOD releases
+        nanoAOD_addDeepDoubleX_switch = cms.untracked.bool(True), 
+        jecPayload = cms.untracked.string('AK8PFPuppi')
+        )
+    # deepAK8 should not run on 80X, that contains ak8PFJetsCHS jets
+    run2_miniAOD_80XLegacy.toModify(nanoAOD_addDeepInfoAK8_switch,
+                                    nanoAOD_addDeepBTag_switch = cms.untracked.bool(True),
+                                    nanoAOD_addDeepBoostedJet_switch = cms.untracked.bool(False),
+                                    nanoAOD_addDeepDoubleX_switch = cms.untracked.bool(False),
+                                    jecPayload = cms.untracked.string('AK8PFchs'))
+    process = nanoAOD_addDeepInfoAK8(process,
+                                     addDeepBTag=nanoAOD_addDeepInfoAK8_switch.nanoAOD_addDeepBTag_switch,
+                                     addDeepBoostedJet=nanoAOD_addDeepInfoAK8_switch.nanoAOD_addDeepBoostedJet_switch,
+                                     addDeepDoubleX=nanoAOD_addDeepInfoAK8_switch.nanoAOD_addDeepDoubleX_switch,
+                                     jecPayload=nanoAOD_addDeepInfoAK8_switch.jecPayload)
     return process
 
 
