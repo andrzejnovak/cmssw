@@ -7,6 +7,7 @@
 #include "DataFormats/BTauReco/interface/SecondaryVertexFeatures.h"
 #include "DataFormats/BTauReco/interface/BoostedDoubleSVTagInfoFeatures.h"
 #include "DataFormats/BTauReco/interface/ChargedCandidateFeatures.h"
+#include "DataFormats/BTauReco/interface/NeutralCandidateFeatures.h"
 
 namespace btagbtvdeep {
 
@@ -22,6 +23,8 @@ namespace btagbtvdeep {
     std::vector<SecondaryVertexFeatures> sv_features;
 
     std::vector<ChargedCandidateFeatures> c_pf_features;
+
+    std::vector<NeutralCandidateFeatures> n_pf_features;
 
     std::size_t npv;  // used by deep flavour
 

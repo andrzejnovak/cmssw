@@ -10,7 +10,8 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 
 ## Options and Output Report
-process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
+process.options = cms.untracked.PSet( wantSummary = cms.untracked.bool(True),
+SkipEvent = cms.untracked.vstring('ProductNotFound'))
 
 ## Source
 process.source = cms.Source("PoolSource",
@@ -71,12 +72,12 @@ from PhysicsTools.PatAlgos.patInputFiles_cff import filesRelValTTbarPileUpMINIAO
 
 process.source.fileNames = filesRelValTTbarPileUpMINIAODSIM
 process.source.fileNames = cms.untracked.vstring(
-'/store/relval/CMSSW_10_3_0_pre2/RelValTTbar_13/MINIAODSIM/PU25ns_103X_upgrade2018_realistic_v2-v1/20000/85820ACA-657B-BC44-AC74-AACD6D54B348.root'
+#'/store/relval/CMSSW_10_3_0_pre2/RelValTTbar_13/MINIAODSIM/PU25ns_103X_upgrade2018_realistic_v2-v1/20000/85820ACA-657B-BC44-AC74-AACD6D54B348.root'
 #'/store/mc/RunIIFall17MiniAOD/GluGluHToBB_M125_13TeV_powheg_pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/C8932584-5006-E811-9840-141877410512.root',
-#'/store/mc/RunIIFall17MiniAODv2/GluGluHToCC_M125_13TeV_powheg_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/30000/72164088-CB67-E811-9D0D-008CFA197AC4.root',
+'/store/mc/RunIIFall17MiniAODv2/GluGluHToCC_M125_13TeV_powheg_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/30000/72164088-CB67-E811-9D0D-008CFA197AC4.root',
 #'/store/mc/RunIIFall17MiniAOD/QCD_HT700to1000_TuneCP5_13TeV-madgraph-pythia8/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/C0F304A4-23FA-E711-942E-E0071B6CAD20.root'
 )
-process.maxEvents.input = 1000 
+process.maxEvents.input = 1000
 
 from Configuration.EventContent.EventContent_cff import MINIAODSIMEventContent
 process.out.outputCommands.append('keep *_slimmedJetsAK8*_*_*')

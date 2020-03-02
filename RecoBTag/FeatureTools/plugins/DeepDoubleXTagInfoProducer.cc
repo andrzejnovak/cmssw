@@ -22,6 +22,7 @@
 #include "DataFormats/BTauReco/interface/DeepDoubleXTagInfo.h"
 
 #include "RecoBTag/FeatureTools/interface/BoostedDoubleSVTagInfoConverter.h"
+#include "RecoBTag/FeatureTools/interface/NeutralCandidateConverter.h"
 #include "RecoBTag/FeatureTools/interface/ChargedCandidateConverter.h"
 #include "RecoBTag/FeatureTools/interface/JetConverter.h"
 #include "RecoBTag/FeatureTools/interface/SecondaryVertexConverter.h"
@@ -119,6 +120,8 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
 
     // reco jet reference (use as much as possible)
     const auto& jet = jets->at(jet_n);
+    const auto* pf_jet = dynamic_cast<const reco::PFJet*>(&jet);
+    const auto* pat_jet = dynamic_cast<const pat::Jet*>(&jet);
 
     edm::RefToBase<reco::Jet> jet_ref(jets, jet_n);
     if (jet.pt() > min_jet_pt_) {
@@ -175,7 +178,7 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
       math::XYZVector jet_dir = jet.momentum().Unit();
       GlobalVector jet_ref_track_dir(jet.px(), jet.py(), jet.pz());
 
-      std::vector<btagbtvdeep::SortingClass<size_t>> c_sorted;
+      std::vector<btagbtvdeep::SortingClass<size_t>> c_sorted, n_sorted;
 
       // to cache the TrackInfo
       std::map<unsigned int, btagbtvdeep::TrackInfoBuilder> trackinfos;
@@ -220,21 +223,27 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
                                   trackinfo.getTrackSip2dSig(),
                                   -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_),
                                   cand->pt() / jet.pt());
+          } else {
+          n_sorted.emplace_back(i, -1, -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand), cand->pt() / jet.pt());
           }
         }
       }
 
       // sort collections (open the black-box if you please)
       std::sort(c_sorted.begin(), c_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
+      std::sort(n_sorted.begin(), n_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
 
-      std::vector<size_t> c_sortedindices;
+      std::vector<size_t> c_sortedindices, n_sortedindices;
 
       // this puts 0 everywhere and the right position in ind
       c_sortedindices = btagbtvdeep::invertSortingVector(c_sorted);
+      n_sortedindices = btagbtvdeep::invertSortingVector(n_sorted);
 
       // set right size to vectors
       features.c_pf_features.clear();
       features.c_pf_features.resize(c_sorted.size());
+      features.n_pf_features.clear();
+      features.n_pf_features.resize(n_sorted.size());
 
       for (unsigned int i = 0; i < daughters.size(); i++) {
         auto const* cand = daughters.at(i);
@@ -244,8 +253,24 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
           if (cand->pt() < 0.95)
             continue;
 
+          auto packed_cand = dynamic_cast<const pat::PackedCandidate*>(cand);
+          auto reco_cand = dynamic_cast<const reco::PFCandidate*>(cand);
+
+          // need some edm::Ptr or edm::Ref if reco candidates
+          reco::PFCandidatePtr reco_ptr;
+          if (pf_jet) {
+            reco_ptr = pf_jet->getPFConstituent(i);
+          } else if (pat_jet && reco_cand) {
+            reco_ptr = pat_jet->getPFConstituent(i);
+          }
           // get PUPPI weight from value map
           float puppiw = 1.0;  // fallback value
+          // if (reco_cand && use_puppi_value_map_) {
+          //   puppiw = (*puppi_value_map)[reco_ptr];
+          // } else if (reco_cand && !fallback_puppi_weight_) {
+          //   throw edm::Exception(edm::errors::InvalidReference, "PUPPI value map missing")
+          //       << "use fallback_puppi_weight option to use " << puppiw << "as default";
+          // }
 
           float drminpfcandsv = btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_);
 
@@ -256,9 +281,6 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
             auto& trackinfo = trackinfos.at(i);
             // get_ref to vector element
             auto& c_pf_features = features.c_pf_features.at(entry);
-            // fill feature structure
-            auto packed_cand = dynamic_cast<const pat::PackedCandidate*>(cand);
-            auto reco_cand = dynamic_cast<const reco::PFCandidate*>(cand);
             if (packed_cand) {
               btagbtvdeep::packedCandidateToFeatures(
                   packed_cand, jet, trackinfo, drminpfcandsv, static_cast<float>(jet_radius_), c_pf_features);
@@ -288,8 +310,20 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
                                                    pv,
                                                    c_pf_features);
             }
+          } else {
+            // is neutral candidate
+            auto entry = n_sortedindices.at(i);
+            // get_ref to vector element
+            auto& n_pf_features = features.n_pf_features.at(entry);
+            // fill feature structure
+            if (packed_cand) {
+              btagbtvdeep::packedCandidateToFeatures(
+                  packed_cand, jet, drminpfcandsv, static_cast<float>(jet_radius_), n_pf_features);
+            } else if (reco_cand) {
+              btagbtvdeep::recoCandidateToFeatures(
+                  reco_cand, jet, drminpfcandsv, static_cast<float>(jet_radius_), puppiw, n_pf_features);
+            }
           }
-        }
       }
     }
     output_tag_infos->emplace_back(features, jet_ref);
@@ -297,6 +331,6 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
 
   iEvent.put(std::move(output_tag_infos));
 }
-
+}
 // define this as a plug-in
 DEFINE_FWK_MODULE(DeepDoubleXTagInfoProducer);
