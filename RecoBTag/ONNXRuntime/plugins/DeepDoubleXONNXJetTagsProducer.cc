@@ -42,12 +42,19 @@ private:
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
 
-  enum InputIndexes { kGlobal = 0, kChargedCandidates = 1, kVertices = 2 };
-  constexpr static unsigned n_features_global_ = 27;
-  constexpr static unsigned n_cpf_ = 60;
-  constexpr static unsigned n_features_cpf_ = 8;
+  enum InputIndexes { kGlobal = 0, kNeutralCandidates = 1, kChargedCandidates = 1, kVertices = 2 };
+  // constexpr static unsigned n_features_global_ = 27;
+  // constexpr static unsigned n_cpf_ = 60;
+  // constexpr static unsigned n_features_cpf_ = 8;
+  // constexpr static unsigned n_sv_ = 5;
+  // constexpr static unsigned n_features_sv_ = 2;
+  constexpr static unsigned n_features_global_ = 5;
+  constexpr static unsigned n_cpf_ = 40;
+  constexpr static unsigned n_features_cpf_ = 21;
+  constexpr static unsigned n_npf_ = 60;
+  constexpr static unsigned n_features_npf_ = 8;
   constexpr static unsigned n_sv_ = 5;
-  constexpr static unsigned n_features_sv_ = 2;
+  constexpr static unsigned n_features_sv_ = 7;
   const static std::vector<unsigned> input_sizes_;
 
   // hold the input data
@@ -55,7 +62,7 @@ private:
 };
 
 const std::vector<unsigned> DeepDoubleXONNXJetTagsProducer::input_sizes_{
-    n_features_global_, n_cpf_* n_features_cpf_, n_sv_* n_features_sv_};
+    n_features_global_, n_npf_* n_features_npf_, n_cpf_* n_features_cpf_, n_sv_* n_features_sv_};
 
 DeepDoubleXONNXJetTagsProducer::DeepDoubleXONNXJetTagsProducer(const edm::ParameterSet& iConfig,
                                                                const ONNXRuntime* cache)
@@ -77,7 +84,7 @@ void DeepDoubleXONNXJetTagsProducer::fillDescriptions(edm::ConfigurationDescript
   // pfDeepDoubleBvLJetTags
   edm::ParameterSetDescription desc;
   desc.add<edm::InputTag>("src", edm::InputTag("pfDeepDoubleXTagInfos"));
-  desc.add<std::vector<std::string>>("input_names", {"input_1", "input_2", "input_3"});
+  desc.add<std::vector<std::string>>("input_names", {"input_1", "input_2", "input_3", "input_4"});
   desc.add<std::vector<std::string>>("output_names", {});
 
   using FIP = edm::FileInPath;
@@ -86,11 +93,11 @@ void DeepDoubleXONNXJetTagsProducer::fillDescriptions(edm::ConfigurationDescript
   using PDCases = edm::ParameterDescriptionCases<std::string>;
   auto flavorCases = [&]() {
     return "BvL" >> (PDPSD("flav_names", std::vector<std::string>{"probQCD", "probHbb"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/DDB.onnx"), true)) or
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
            "CvL" >> (PDPSD("flav_names", std::vector<std::string>{"probQCD", "probHcc"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/DDC.onnx"), true)) or
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
            "CvB" >> (PDPSD("flav_names", std::vector<std::string>{"probHbb", "probHcc"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/DDCvB.onnx"), true));
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true));
   };
   auto descBvL(desc);
   descBvL.ifValue(edm::ParameterDescription<std::string>("flavor", "BvL", true), flavorCases());
@@ -189,35 +196,53 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
   start = ptr;
   const auto& tag_info_features = features.tag_info_features;
   *ptr = tag_info_features.jetNTracks;
-  *(++ptr) = tag_info_features.jetNSecondaryVertices;
+  //*(++ptr) = tag_info_features.jetNSecondaryVertices;
   *(++ptr) = tag_info_features.tau1_trackEtaRel_0;
   *(++ptr) = tag_info_features.tau1_trackEtaRel_1;
-  *(++ptr) = tag_info_features.tau1_trackEtaRel_2;
-  *(++ptr) = tag_info_features.tau2_trackEtaRel_0;
-  *(++ptr) = tag_info_features.tau2_trackEtaRel_1;
-  *(++ptr) = tag_info_features.tau2_trackEtaRel_2;
-  *(++ptr) = tag_info_features.tau1_flightDistance2dSig;
-  *(++ptr) = tag_info_features.tau2_flightDistance2dSig;
+  // *(++ptr) = tag_info_features.tau1_trackEtaRel_2;
+  // *(++ptr) = tag_info_features.tau2_trackEtaRel_0;
+  // *(++ptr) = tag_info_features.tau2_trackEtaRel_1;
+  // *(++ptr) = tag_info_features.tau2_trackEtaRel_2;
+  // *(++ptr) = tag_info_features.tau1_flightDistance2dSig;
+  // *(++ptr) = tag_info_features.tau2_flightDistance2dSig;
   *(++ptr) = tag_info_features.tau1_vertexDeltaR;
   // Note: this variable is not used in the 27-input BDT
   //    *(++ptr) = tag_info_features.tau2_vertexDeltaR;
   *(++ptr) = tag_info_features.tau1_vertexEnergyRatio;
-  *(++ptr) = tag_info_features.tau2_vertexEnergyRatio;
-  *(++ptr) = tag_info_features.tau1_vertexMass;
-  *(++ptr) = tag_info_features.tau2_vertexMass;
-  *(++ptr) = tag_info_features.trackSip2dSigAboveBottom_0;
-  *(++ptr) = tag_info_features.trackSip2dSigAboveBottom_1;
-  *(++ptr) = tag_info_features.trackSip2dSigAboveCharm;
-  *(++ptr) = tag_info_features.trackSip3dSig_0;
-  *(++ptr) = tag_info_features.tau1_trackSip3dSig_0;
-  *(++ptr) = tag_info_features.tau1_trackSip3dSig_1;
-  *(++ptr) = tag_info_features.trackSip3dSig_1;
-  *(++ptr) = tag_info_features.tau2_trackSip3dSig_0;
-  *(++ptr) = tag_info_features.tau2_trackSip3dSig_1;
-  *(++ptr) = tag_info_features.trackSip3dSig_2;
-  *(++ptr) = tag_info_features.trackSip3dSig_3;
-  *(++ptr) = tag_info_features.z_ratio;
+  // *(++ptr) = tag_info_features.tau2_vertexEnergyRatio;
+  // *(++ptr) = tag_info_features.tau1_vertexMass;
+  // *(++ptr) = tag_info_features.tau2_vertexMass;
+  // *(++ptr) = tag_info_features.trackSip2dSigAboveBottom_0;
+  // *(++ptr) = tag_info_features.trackSip2dSigAboveBottom_1;
+  // *(++ptr) = tag_info_features.trackSip2dSigAboveCharm;
+  // *(++ptr) = tag_info_features.trackSip3dSig_0;
+  // *(++ptr) = tag_info_features.tau1_trackSip3dSig_0;
+  // *(++ptr) = tag_info_features.tau1_trackSip3dSig_1;
+  // *(++ptr) = tag_info_features.trackSip3dSig_1;
+  // *(++ptr) = tag_info_features.tau2_trackSip3dSig_0;
+  // *(++ptr) = tag_info_features.tau2_trackSip3dSig_1;
+  // *(++ptr) = tag_info_features.trackSip3dSig_2;
+  // *(++ptr) = tag_info_features.trackSip3dSig_3;
+  // *(++ptr) = tag_info_features.z_ratio;
   assert(start + n_features_global_ - 1 == ptr);
+
+    // n_pf candidates
+  auto max_n_pf_n = std::min(features.n_pf_features.size(), (std::size_t)25);
+  offset = i_jet * input_sizes_[kNeutralCandidates];
+  for (std::size_t n_pf_n = 0; n_pf_n < max_n_pf_n; n_pf_n++) {
+    const auto& n_pf_features = features.n_pf_features.at(n_pf_n);
+    ptr = &data_[kNeutralCandidates][offset + n_pf_n * n_features_npf_];
+    start = ptr;
+    *ptr = n_pf_features.deltaR;
+    *(++ptr) = n_pf_features.drminsv;
+    *(++ptr) = n_pf_features.drsubjet1;
+    *(++ptr) = n_pf_features.drsubjet2;
+    *(++ptr) = n_pf_features.erel;
+    *(++ptr) = n_pf_features.hadFrac;
+    *(++ptr) = n_pf_features.ptrel;
+    *(++ptr) = n_pf_features.puppiw;
+    assert(start + n_features_npf_ - 1 == ptr);
+  }
 
   // c_pf candidates
   auto max_c_pf_n = std::min(features.c_pf_features.size(), (std::size_t)n_cpf_);
@@ -227,13 +252,41 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     ptr = &data_[kChargedCandidates][offset + c_pf_n * n_features_cpf_];
     start = ptr;
     *ptr = c_pf_features.btagPf_trackEtaRel;
-    *(++ptr) = c_pf_features.btagPf_trackPtRatio;
-    *(++ptr) = c_pf_features.btagPf_trackPParRatio;
-    *(++ptr) = c_pf_features.btagPf_trackSip2dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip2dSig;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dSig;
     *(++ptr) = c_pf_features.btagPf_trackJetDistVal;
+    *(++ptr) = c_pf_features.btagPf_trackPParRatio;
+    *(++ptr) = c_pf_features.btagPf_trackPtRatio;
+    *(++ptr) = c_pf_features.btagPf_trackSip2dSig;
+    *(++ptr) = c_pf_features.btagPf_trackSip2dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dSig;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    //dummy
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.deltaR;
+    // *(++ptr) = c_pf_features.drminsv;
+    // *(++ptr) = c_pf_features.drsubjet1;
+    // *(++ptr) = c_pf_features.drsubjet2;
+    // *(++ptr) = c_pf_features.dxy;
+    // *(++ptr) = c_pf_features.dxysig;
+    // *(++ptr) = c_pf_features.dz;
+    // *(++ptr) = c_pf_features.dzsig;
+    // *(++ptr) = c_pf_features.erel;
+    // *(++ptr) = c_pf_features.etarel;
+    // *(++ptr) = c_pf_features.chi2;
+    // *(++ptr) = c_pf_features.ptrel;
+    // *(++ptr) = c_pf_features.quality;   
     assert(start + n_features_cpf_ - 1 == ptr);
   }
 
@@ -244,8 +297,13 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     const auto& sv_features = features.sv_features.at(sv_n);
     ptr = &data_[kVertices][offset + sv_n * n_features_sv_];
     start = ptr;
-    *ptr = sv_features.d3d;
-    *(++ptr) = sv_features.d3dsig;
+    *ptr = sv_features.costhetasvpv;
+    *(++ptr) = sv_features.deltaR;
+    *(++ptr) = sv_features.dxysig;
+    *(++ptr) = sv_features.mass;
+    *(++ptr) = sv_features.ntracks;
+    *(++ptr) = sv_features.pt;
+    *(++ptr) = sv_features.ptrel;
     assert(start + n_features_sv_ - 1 == ptr);
   }
 }

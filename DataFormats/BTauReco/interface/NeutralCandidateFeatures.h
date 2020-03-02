@@ -6,6 +6,10 @@ namespace btagbtvdeep {
   class NeutralCandidateFeatures {
   public:
     float ptrel;
+    float erel;
+
+    float drsubjet1;
+    float drsubjet2;
 
     float puppiw;
     float deltaR;

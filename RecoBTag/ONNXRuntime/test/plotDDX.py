@@ -4,7 +4,7 @@ from DataFormats.FWLite import Handle, Events
 
 events_c = Events('output_test_DDX.root')
 
-handleJ  = Handle ("std::vector<pat::Jet>")
+handleJ  = Handle("std::vector<pat::Jet>")
 labelJ = ("selectedUpdatedPatJets","","PATtest")
 
 h_probQ_ddb = ROOT.TH1F('h_probQ_ddb', ';prob Q;', 40, 0., 1.)
@@ -13,10 +13,11 @@ h_probH_ddb = ROOT.TH1F('h_probH_ddb', ';prob H;', 40, 0., 1.)
 h_probQ_ddc = ROOT.TH1F('h_probQ_ddc', ';prob Q;', 40, 0., 1.)
 h_probH_ddc = ROOT.TH1F('h_probH_ddc', ';prob H;', 40, 0., 1.)
 
-for iev,event in enumerate(events_c):
+for iev, event in enumerate(events_c):
     event.getByLabel (labelJ, handleJ)
     jets = handleJ.product()
-    for jet in jets  :
+    print(iev)
+    for jet in jets:
         if jet.pt() < 300 or jet.pt() > 2000: continue
         if jet.mass() < 40 or jet.mass() > 200: continue
 
