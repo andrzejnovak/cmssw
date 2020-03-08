@@ -84,7 +84,8 @@ void DeepDoubleXTagInfoProducer::fillDescriptions(edm::ConfigurationDescriptions
   desc.add<double>("min_candidate_pt", 0.95);
   desc.add<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   desc.add<edm::InputTag>("secondary_vertices", edm::InputTag("inclusiveCandidateSecondaryVertices"));
-  desc.add<edm::InputTag>("jets", edm::InputTag("ak8PFJetsCHS"));
+  //desc.add<edm::InputTag>("jets", edm::InputTag("ak8PFJetsCHS"));
+  desc.add<edm::InputTag>("jets", edm::InputTag("ak8PFJetsPuppi"));
   descriptions.add("pfDeepDoubleXTagInfos", desc);
 }
 
@@ -118,7 +119,8 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
     btagbtvdeep::DeepDoubleXFeatures features;
 
     // reco jet reference (use as much as possible)
-    const auto& jet = jets->at(jet_n);
+    //const auto& jet = jets->at(jet_n);
+    const auto &jet = (*jets)[jet_n];
 
     edm::RefToBase<reco::Jet> jet_ref(jets, jet_n);
     if (jet.pt() > min_jet_pt_) {

@@ -362,6 +362,13 @@ void DeepBoostedJetTagInfoProducer::fillParticleFeatures(DeepBoostedJetFeatures 
 
     // subjets
     auto subjets = patJet->subjets();
+    std::cout << "Jet pT:" << jet.pt() << std::endl;
+    std::cout << "Jet nd:" << jet.numberOfDaughters() << std::endl;
+    if (patJet->hasSubjets("SoftDropPuppi")){
+      auto subjets = patJet->subjets();
+      std::cout << "Subjets:" << subjets.size() << std::endl;
+      std::cout << "Jet pT:" << jet.pt() << std::endl;
+    }
     std::sort(subjets.begin(), subjets.end(), [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) {
       return p1->pt() > p2->pt();
     });  // sort by pt

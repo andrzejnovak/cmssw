@@ -4,8 +4,9 @@ from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
 
 from FWCore.ParameterSet.VarParsing import VarParsing
 options = VarParsing('analysis')
-options.inputFiles = '/store/mc/RunIIFall17MiniAOD/ZprimeToWWToWlepWhad_narrow_M-3000_TuneCP5_13TeV-madgraph/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/3E25D208-8205-E811-8858-3417EBE64426.root'
-options.maxEvents = -1
+#options.inputFiles = '/store/mc/RunIIFall17MiniAOD/ZprimeToWWToWlepWhad_narrow_M-3000_TuneCP5_13TeV-madgraph/MINIAODSIM/94X_mc2017_realistic_v10-v1/20000/3E25D208-8205-E811-8858-3417EBE64426.root'
+options.inputFiles = '/store/mc/RunIIFall17MiniAODv2/GluGluHToCC_M125_13TeV_powheg_pythia8/MINIAODSIM/PU2017_12Apr2018_94X_mc2017_realistic_v14-v2/30000/72164088-CB67-E811-9D0D-008CFA197AC4.root'
+options.maxEvents = 200
 options.parseArguments()
 
 process = cms.Process("PATtest")
@@ -48,7 +49,7 @@ process.outpath = cms.EndPath(process.out, patAlgosToolsTask)
 
 ## and add them to the event content
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
-from RecoBTag.MXNet.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
+from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
 
 updateJetCollection(
    process,
