@@ -4,7 +4,7 @@ from HLTriggerOffline.Btag.hltBtagJetMCTools_cff import *
 #denominator trigger
 hltBtagTriggerSelection = cms.EDFilter( "TriggerResultsFilter",
     triggerConditions = cms.vstring(
-      "HLT_PFMET120_PFMHT120_IDTight_v* OR HLT_PFHT330PT30_QuadPFJet_75_60_45_40_v* OR HLT_PFHT380_SixPFJet32_DoublePFBTagCSV_* OR HLT_PFHT380_SixPFJet32_DoublePFBTagDeepCSV_* OR HLT_IsoMu24_eta2p1_v*"),
+      "HLT_PFMET120_PFMHT120_IDTight_v* OR HLT_PFHT330PT30_QuadPFJet_75_60_45_40_v* OR HLT_PFHT380_SixPFJet32_DoublePFBTagCSV_* OR HLT_PFHT380_SixPFJet32_DoublePFBTagDeepCSV_* OR HLT_IsoMu24_eta2p1_v* OR HLT_PFHT550_4JetPt50_v*"),
     hltResults = cms.InputTag( "TriggerResults", "", "HLT" ),
 #    l1tResults = cms.InputTag( "simGtDigis" ),
     l1tResults = cms.InputTag( "" ),
@@ -26,8 +26,9 @@ HltVertexValidationVertices= DQMEDAnalyzer('HLTVertexPerformanceAnalyzer',
 	'HLT_PFHT400_SixPFJet32_DoublePFBTagDeepCSV_',
 	'HLT_IsoMu24_eta2p1_v',
 	'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFDiJet30_PFBtagDeepCSV_1p5',
-	'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_CaloDiJet30_CaloBtagDeepCSV_1p5'
+	'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_CaloDiJet30_CaloBtagDeepCSV_1p5',
 	'HLT_BTagMu_AK4DiJet20_Mu5_v',
+	'HLT_PFHT550_4JetPt50_v',
 	),
 	Vertex = cms.VInputTag(
 		cms.InputTag("hltVerticesL3"), 
@@ -51,6 +52,8 @@ hltbTagValidation = DQMEDAnalyzer('HLTBTagPerformanceAnalyzer',
 	'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_PFDiJet30_PFBtagDeepCSV_1p5',
 	'HLT_Mu8_TrkIsoVVL_Ele23_CaloIdL_TrackIdL_IsoVL_DZ_CaloDiJet30_CaloBtagDeepCSV_1p5',
 	'HLT_BTagMu_AK4DiJet20_Mu5_v',
+	'HLT_PFHT550_4JetPt50_v',
+	'HLT_PFHT550_4JetPt50_v',
 	),
 	JetTag = cms.VInputTag(
 		cms.InputTag("hltDeepCombinedSecondaryVertexBJetTagsCalo", "probb"),
@@ -62,6 +65,8 @@ hltbTagValidation = DQMEDAnalyzer('HLTBTagPerformanceAnalyzer',
 		cms.InputTag("hltDeepCombinedSecondaryVertexBJetTagsPF", "probb"),
 		cms.InputTag("hltDeepCombinedSecondaryVertexBJetTagsCalo", "probb"),
 		cms.InputTag("hltBSoftMuonDiJet20L1FastJetL25Jets"),
+		cms.InputTag("hltCombinedSecondaryVertexBJetTagsCalo"),
+		cms.InputTag("hltCombinedSecondaryVertexBJetTagsPF"),
 		),
 	MinJetPT = cms.double(20),
 	mcFlavours = cms.PSet(

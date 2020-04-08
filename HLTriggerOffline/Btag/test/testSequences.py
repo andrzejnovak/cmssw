@@ -33,13 +33,14 @@ def add_rawRelVals(process, inputName):
    process.source = cms.Source("PoolSource", fileNames = cms.untracked.vstring(raw_files))
    return process
 
-add_rawRelVals(process, str(sys.argv[-1]))
+#add_rawRelVals(process, str(sys.argv[-1]))
 
-#process.source = cms.Source("PoolSource",
-#	fileNames = cms.untracked.vstring(
-#'root://cms-xrd-global.cern.ch//store/user/mdefranc/RelValTTbar_13/ttbarRelVal_noPU_3/180715_094624/0000/step2_50.root',
-#)
-#)
+process.source = cms.Source("PoolSource",
+	fileNames = cms.untracked.vstring(
+#'root://cms-xrd-global.cern.ch//store/user/mdefranc/RelValTTbar_13/ttbarRelVal_noPU_3/180715_094624/0000/step2_50.root'
+"file:RelValTTbar_13UP16__CMSSW_10_6_11_CANDIDATE-PU25ns_80X_mcRun2_asymptotic_v20_hlt16-v1__GEN-SIM-DIGI-HLTDEBUG_50.root",
+)
+)
 
 
 
