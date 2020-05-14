@@ -324,6 +324,7 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
                   reco_cand, jet, drminpfcandsv, static_cast<float>(jet_radius_), puppiw, n_pf_features);
             }
           }
+        }
       }
     }
     output_tag_infos->emplace_back(features, jet_ref);
@@ -331,6 +332,6 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
 
   iEvent.put(std::move(output_tag_infos));
 }
-}
+
 // define this as a plug-in
 DEFINE_FWK_MODULE(DeepDoubleXTagInfoProducer);
