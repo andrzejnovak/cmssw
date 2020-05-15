@@ -224,6 +224,7 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
   // *(++ptr) = tag_info_features.trackSip3dSig_2;
   // *(++ptr) = tag_info_features.trackSip3dSig_3;
   // *(++ptr) = tag_info_features.z_ratio;
+  
   assert(start + n_features_global_ - 1 == ptr);
 
     // n_pf candidates
@@ -260,33 +261,34 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = c_pf_features.btagPf_trackSip3dSig;
     *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
     //dummy
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.deltaR;
-    // *(++ptr) = c_pf_features.drminsv;
-    // *(++ptr) = c_pf_features.drsubjet1;
-    // *(++ptr) = c_pf_features.drsubjet2;
-    // *(++ptr) = c_pf_features.dxy;
-    // *(++ptr) = c_pf_features.dxysig;
-    // *(++ptr) = c_pf_features.dz;
-    // *(++ptr) = c_pf_features.dzsig;
-    // *(++ptr) = c_pf_features.erel;
-    // *(++ptr) = c_pf_features.etarel;
-    // *(++ptr) = c_pf_features.chi2;
-    // *(++ptr) = c_pf_features.ptrel;
-    // *(++ptr) = c_pf_features.quality;   
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+    *(++ptr) = c_pf_features.deltaR;
+    *(++ptr) = c_pf_features.drminsv;
+    *(++ptr) = c_pf_features.drsubjet1;
+    *(++ptr) = c_pf_features.drsubjet2;
+    *(++ptr) = c_pf_features.dxy;
+    *(++ptr) = c_pf_features.dxysig;
+    *(++ptr) = c_pf_features.dz;
+    *(++ptr) = c_pf_features.dzsig;
+    *(++ptr) = c_pf_features.erel;
+    *(++ptr) = c_pf_features.etarel;
+    *(++ptr) = c_pf_features.chi2;
+    *(++ptr) = c_pf_features.ptrel;
+    *(++ptr) = c_pf_features.quality;   
+    // std::cout << "                   cpfXXX" << start + n_features_cpf_ - 1 << ptr << std::endl;
     assert(start + n_features_cpf_ - 1 == ptr);
   }
 

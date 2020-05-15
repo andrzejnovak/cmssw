@@ -32,13 +32,16 @@ namespace btagbtvdeep {
                                         NeutralCandidateFeatures& n_pf_features) {
 
     const auto *patJet = dynamic_cast<const pat::Jet *>(&jet);
+    
     if (!patJet) {
       throw edm::Exception(edm::errors::InvalidReference) << "Input is not a pat::Jet.";
     }
-    auto subjets = patJet->subjets();
+    auto subjets = patJet-> subjets();
+    //std::cout << "      Casted subjet " << std::endl;
     std::sort(subjets.begin(), subjets.end(), [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) {
       return p1->pt() > p2->pt();
     });  // sort by pt
+    //std::cout << "      Sorted subjets " << std::endl;
     n_pf_features.drsubjet1 = !subjets.empty() ? reco::deltaR(*n_pf, *subjets.at(0)) : -1;
     n_pf_features.drsubjet2 = subjets.size() > 1 ? reco::deltaR(*n_pf, *subjets.at(1)) : -1;
 
