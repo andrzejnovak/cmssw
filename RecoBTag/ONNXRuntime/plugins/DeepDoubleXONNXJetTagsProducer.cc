@@ -42,17 +42,18 @@ private:
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
 
-  enum InputIndexes { kGlobal = 0, kNeutralCandidates = 1, kChargedCandidates = 1, kVertices = 2 };
+  //enum InputIndexes { kGlobal = 0, kChargedCandidates = 1, kNeutralCandidates = 2, kVertices = 3 };
+  enum InputIndexes { kGlobal = 0, kNeutralCandidates = 1, kChargedCandidates = 2, kVertices = 3 };
   // constexpr static unsigned n_features_global_ = 27;
   // constexpr static unsigned n_cpf_ = 60;
   // constexpr static unsigned n_features_cpf_ = 8;
   // constexpr static unsigned n_sv_ = 5;
   // constexpr static unsigned n_features_sv_ = 2;
   constexpr static unsigned n_features_global_ = 5;
-  constexpr static unsigned n_cpf_ = 40;
-  constexpr static unsigned n_features_cpf_ = 21;
   constexpr static unsigned n_npf_ = 60;
   constexpr static unsigned n_features_npf_ = 8;
+  constexpr static unsigned n_cpf_ = 40;
+  constexpr static unsigned n_features_cpf_ = 21;
   constexpr static unsigned n_sv_ = 5;
   constexpr static unsigned n_features_sv_ = 7;
   const static std::vector<unsigned> input_sizes_;
@@ -227,24 +228,6 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
   
   assert(start + n_features_global_ - 1 == ptr);
 
-    // n_pf candidates
-  auto max_n_pf_n = std::min(features.n_pf_features.size(), (std::size_t)25);
-  offset = i_jet * input_sizes_[kNeutralCandidates];
-  for (std::size_t n_pf_n = 0; n_pf_n < max_n_pf_n; n_pf_n++) {
-    const auto& n_pf_features = features.n_pf_features.at(n_pf_n);
-    ptr = &data_[kNeutralCandidates][offset + n_pf_n * n_features_npf_];
-    start = ptr;
-    *ptr = n_pf_features.deltaR;
-    *(++ptr) = n_pf_features.drminsv;
-    *(++ptr) = n_pf_features.drsubjet1;
-    *(++ptr) = n_pf_features.drsubjet2;
-    *(++ptr) = n_pf_features.erel;
-    *(++ptr) = n_pf_features.hadFrac;
-    *(++ptr) = n_pf_features.ptrel;
-    *(++ptr) = n_pf_features.puppiw;
-    assert(start + n_features_npf_ - 1 == ptr);
-  }
-
   // c_pf candidates
   auto max_c_pf_n = std::min(features.c_pf_features.size(), (std::size_t)n_cpf_);
   offset = i_jet * input_sizes_[kChargedCandidates];
@@ -288,8 +271,27 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = c_pf_features.chi2;
     *(++ptr) = c_pf_features.ptrel;
     *(++ptr) = c_pf_features.quality;   
-    // std::cout << "                   cpfXXX" << start + n_features_cpf_ - 1 << ptr << std::endl;
+     std::cout << "                   cpfXXX" << start + n_features_cpf_ - 1 << ptr << std::endl;
     assert(start + n_features_cpf_ - 1 == ptr);
+  }
+
+  // n_pf candidates
+  auto max_n_pf_n = std::min(features.n_pf_features.size(), (std::size_t)n_cpf_);
+  offset = i_jet * input_sizes_[kNeutralCandidates];
+  for (std::size_t n_pf_n = 0; n_pf_n < max_n_pf_n; n_pf_n++) {
+    const auto& n_pf_features = features.n_pf_features.at(n_pf_n);
+    ptr = &data_[kNeutralCandidates][offset + n_pf_n * n_features_npf_];
+    start = ptr;
+    *ptr = n_pf_features.deltaR;
+    *(++ptr) = n_pf_features.drminsv;
+    *(++ptr) = n_pf_features.drsubjet1;
+    *(++ptr) = n_pf_features.drsubjet2;
+    *(++ptr) = n_pf_features.erel;
+    *(++ptr) = n_pf_features.hadFrac;
+    *(++ptr) = n_pf_features.ptrel;
+    *(++ptr) = n_pf_features.puppiw;
+    std::cout << "                   npfXXX" << start + n_features_npf_ - 1 << ptr << std::endl;
+    assert(start + n_features_npf_ - 1 == ptr);
   }
 
   // sv candidates
@@ -306,6 +308,7 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = sv_features.ntracks;
     *(++ptr) = sv_features.pt;
     *(++ptr) = sv_features.ptrel;
+    std::cout << "                   nvXXX" << start + n_features_sv_ - 1 << ptr << std::endl;
     assert(start + n_features_sv_ - 1 == ptr);
   }
 }
