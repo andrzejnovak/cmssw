@@ -51,17 +51,6 @@ namespace btagbtvdeep {
 
     c_pf_features.drminsv = catch_infs_and_bound(drminpfcandsv, 0, -1. * jetR, 0, -1. * jetR);
 
-    // // cov related
-    // auto cov = [&](unsigned i, unsigned j) { return catch_infs(cp_f->covariance(i, j)); };
-    // c_pf_features.dptdpt = cov(0, 0));
-    // c_pf_features.detadeta = cov(1, 1));
-    // c_pf_features.dphidphi = cov(2, 2));
-    // c_pf_features.dxydxy = cov(3, 3));
-    // c_pf_features.dzdz = cov(4, 4));
-    // c_pf_features.dxydz = cov(3, 4));
-    // c_pf_features.dphidxy = cov(2, 3));
-    // c_pf_features.dlambdadz = cov(1, 4));
-
     // subjet related
     const auto *patJet = dynamic_cast<const pat::Jet *>(&jet);
     if (!patJet) {

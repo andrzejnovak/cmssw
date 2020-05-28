@@ -36,15 +36,13 @@ namespace btagbtvdeep {
     if (!patJet) {
       throw edm::Exception(edm::errors::InvalidReference) << "Input is not a pat::Jet.";
     }
-    auto subjets = patJet-> subjets();
-    //std::cout << "      Casted subjet " << std::endl;
-    std::sort(subjets.begin(), subjets.end(), [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) {
-      return p1->pt() > p2->pt();
-    });  // sort by pt
-    //std::cout << "      Sorted subjets " << std::endl;
+    // Do Subjets
+    auto subjets = patJet-> subjets();;   // sort by pt
+    std::sort(subjets.begin(), subjets.end(), [](const edm::Ptr<pat::Jet> &p1, const edm::Ptr<pat::Jet> &p2) {return p1->pt() > p2->pt();});
     n_pf_features.drsubjet1 = !subjets.empty() ? reco::deltaR(*n_pf, *subjets.at(0)) : -1;
     n_pf_features.drsubjet2 = subjets.size() > 1 ? reco::deltaR(*n_pf, *subjets.at(1)) : -1;
 
+    // Jet relative vars
     n_pf_features.ptrel = n_pf->pt() / jet.pt();
     n_pf_features.erel = n_pf->energy() / jet.energy();
     n_pf_features.deltaR = reco::deltaR(*n_pf, jet);
