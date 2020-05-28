@@ -123,7 +123,6 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
     const auto* pf_jet = dynamic_cast<const reco::PFJet*>(&jet);
     const auto* pat_jet = dynamic_cast<const pat::Jet*>(&jet);
     
-    std::cout << "jetn" << jet_n << std::endl;
     edm::RefToBase<reco::Jet> jet_ref(jets, jet_n);
     if (jet.pt() > min_jet_pt_) {
       features.filled();
@@ -175,13 +174,12 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
         }
       }
 
-      std::cout << "SV work" << std::endl;
-
       // stuff required for dealing with pf candidates
       math::XYZVector jet_dir = jet.momentum().Unit();
       GlobalVector jet_ref_track_dir(jet.px(), jet.py(), jet.pz());
 
       std::vector<btagbtvdeep::SortingClass<size_t>> c_sorted, n_sorted;
+      std::vector<int> n_indexes;
 
       // to cache the TrackInfo
       std::map<unsigned int, btagbtvdeep::TrackInfoBuilder> trackinfos;
@@ -211,12 +209,11 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
         }
       }
 
-      std::cout << "Filled daughters" << jet_n << std::endl;
-      std::cout << "  Number " << jet.numberOfDaughters() << std::endl;
-
+      std::sort(daughters.begin(), daughters.end(), [](const auto &a, const auto &b) { return a->pt() > b->pt(); });
+      int NPF1 = 0;
+      int NPF2 = 0;
       for (unsigned int i = 0; i < daughters.size(); i++) {
         auto const* cand = daughters.at(i);
-        std::cout << "Daughter_i " << i << std::endl;
         if (cand) {
           // candidates under 950MeV (configurable) are not considered
           // might change if we use also white-listing
@@ -227,14 +224,19 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
             trackinfo.buildTrackInfo(cand, jet_dir, jet_ref_track_dir, pv);
             c_sorted.emplace_back(i,
                                   trackinfo.getTrackSip2dSig(),
-                                  -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_),
+                                  -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_), //FIXME
                                   cand->pt() / jet.pt());
           } else {
-          n_sorted.emplace_back(i, -1, -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand), cand->pt() / jet.pt());
+          n_sorted.emplace_back(i, -1, -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_), cand->pt() / jet.pt()); //FIXME
+          n_indexes.push_back(i);
+          NPF1 += 1;
           }
         }
       }
 
+      // std::cout << "Daughters " << daughters.size() << std::endl;
+      // std::cout << "NPF1 " << NPF1 << std::endl;
+      // std::cout << "nsort " << n_sorted.size() << "nind " << n_indexes.size() << std::endl;
       // sort collections (open the black-box if you please)
       std::sort(c_sorted.begin(), c_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
       std::sort(n_sorted.begin(), n_sorted.end(), btagbtvdeep::SortingClass<std::size_t>::compareByABCInv);
@@ -251,21 +253,19 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
       features.n_pf_features.clear();
       features.n_pf_features.resize(n_sorted.size());
 
-      std::cout << "Sorting worked" << std::endl;
-
+      int npfi = 0; // fill like a normal person
+      // std::cout << "Daughters " << daughters.size() << std::endl;
       for (unsigned int i = 0; i < daughters.size(); i++) {
         auto const* cand = daughters.at(i);
-        std::cout << "XDaughter_i " << i << std::endl;
         if (cand) {
           // candidates under 950MeV are not considered
           // might change if we use also white-listing
-          std::cout << "   0a" << std::endl;
-          if (cand->pt() < 0.95)
+          if (cand->pt() < min_candidate_pt_)
             continue;
-          std::cout << "   a" << std::endl;
           auto packed_cand = dynamic_cast<const pat::PackedCandidate*>(cand);
           auto reco_cand = dynamic_cast<const reco::PFCandidate*>(cand);
-          std::cout << "   b" << std::endl;
+
+          std::cout << "Xcharge " << cand->charge() <<  ", dR " << -btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, 0.8) << ", puppiw " << packed_cand->puppiWeight() << std::endl;
           // need some edm::Ptr or edm::Ref if reco candidates
           reco::PFCandidatePtr reco_ptr;
           if (pf_jet) {
@@ -273,7 +273,6 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
           } else if (pat_jet && reco_cand) {
             reco_ptr = pat_jet->getPFConstituent(i);
           }
-          std::cout << "   c" << std::endl;
           // get PUPPI weight from value map
           float puppiw = 1.0;  // fallback value
           // if (reco_cand && use_puppi_value_map_) {
@@ -283,10 +282,8 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
           //       << "use fallback_puppi_weight option to use " << puppiw << "as default";
           // }
 
-          float drminpfcandsv = btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_);
-          std::cout << "   d" << std::endl;
+          float drminpfcandsv = btagbtvdeep::mindrsvpfcand(svs_unsorted, cand, jet_radius_); //FIXME
           if (cand->charge() != 0) {
-            std::cout << "   is track " << std::endl;
             // is charged candidate
             auto entry = c_sortedindices.at(i);
             // get cached track info
@@ -323,28 +320,37 @@ void DeepDoubleXTagInfoProducer::produce(edm::Event& iEvent, const edm::EventSet
                                                    c_pf_features);
             }
           } else {
-            std::cout << "   is NPF " << std::endl;
+            
             // is neutral candidate
             auto entry = n_sortedindices.at(i);
-            std::cout << "   A " << std::endl;
+            //auto entry = n_indexes.at(npfi);
+            // std::cout << "Size nsorted " <<  n_sorted.size() << ", Size nindexes " << n_indexes.size() << std::endl; 
+            // std::cout << "Entry " << entry << ", i " << i << ", npfi " << npfi << std::endl;
+            //auto entry = i;
             // get_ref to vector element
+            //std::cout << "Xcharge " << xcand->charge() << ", puppiw " << xpcand->puppiWeight() << std::endl;
             auto& n_pf_features = features.n_pf_features.at(entry);
-            std::cout << "   B " << std::endl;
-            // fill feature structure
+            npfi += 1;
+            // // fill feature structure
             if (packed_cand) {
-              std::cout << "   C1 " << std::endl;
               btagbtvdeep::packedCandidateToFeatures(
                   packed_cand, *pat_jet, drminpfcandsv, static_cast<float>(jet_radius_), n_pf_features);
-                  std::cout << "   C1 " << std::endl;
             } else if (reco_cand) {
-              std::cout << "   C2 " << std::endl;
               btagbtvdeep::recoCandidateToFeatures(
                   reco_cand, jet, drminpfcandsv, static_cast<float>(jet_radius_), puppiw, n_pf_features);
                   
             }
+            //NPF2 += 1;
+          
           }
         }
       }
+      // Inspect features in order supplied to tagger
+      for (unsigned int i = 0; i < features.n_pf_features.size(); i++) {
+        std::cout << "puppiw " << features.n_pf_features.at(i).puppiw << std::endl;
+      }
+
+    //std::cout << "NPF2 " << NPF2 << std::endl;
     }
     output_tag_infos->emplace_back(features, jet_ref);
   }

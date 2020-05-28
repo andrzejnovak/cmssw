@@ -1,4 +1,3 @@
-
 import FWCore.ParameterSet.Config as cms
 from PhysicsTools.PatAlgos.tools.helpers import getPatAlgosToolsTask
 
@@ -6,7 +5,7 @@ process = cms.Process("PATtest")
 
 ## MessageLogger
 process.load("FWCore.MessageLogger.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 
 
 ## Options and Output Report
@@ -16,10 +15,14 @@ SkipEvent = cms.untracked.vstring('ProductNotFound'))
 ## Source
 process.source = cms.Source("PoolSource",
     fileNames = cms.untracked.vstring(),
-    #skipEvents=cms.untracked.uint32(2000)
+    #skipEvents=cms.untracked.uint32(250)
 )
+
+process.source.eventsToProcess = cms.untracked.VEventRange("1:3127296-1:3127297")
+
 ## Maximal Number of Events
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
 process.load("Configuration.Geometry.GeometryRecoDB_cff")

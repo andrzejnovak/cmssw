@@ -31,10 +31,10 @@ namespace btagbtvdeep {
     }
 
     c_pf_features.deltaR = reco::deltaR(*c_pf, jet);
-    c_pf_features.ptrel = catch_infs_and_bound(c_pf->pt() / jet.pt(), 0, -1, 0, -1);
-    c_pf_features.erel = catch_infs_and_bound(c_pf->energy() / jet.energy(), 0, -1, 0, -1);
+    c_pf_features.ptrel = c_pf->pt() / jet.pt();
+    c_pf_features.erel = c_pf->energy() / jet.energy();
     const float etasign = jet.eta() > 0 ? 1 : -1;
-    c_pf_features.etarel = etasign * catch_infs_and_bound(c_pf->eta() / jet.eta(), 0, -1, 0, -1);
+    c_pf_features.etarel = etasign * (c_pf->eta() - jet.eta());
     
 
     c_pf_features.btagPf_trackEtaRel = catch_infs_and_bound(track_info.getTrackEtaRel(), 0, -5, 15);

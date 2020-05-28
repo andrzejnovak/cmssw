@@ -1,4 +1,4 @@
-#include "FWCore/Framework/interface/Frameworkfwd.h"
+  #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/stream/EDProducer.h"
 
 #include "FWCore/Framework/interface/Event.h"
@@ -16,6 +16,10 @@
 #include "PhysicsTools/ONNXRuntime/interface/ONNXRuntime.h"
 
 #include <algorithm>
+#include <iostream>
+
+#include <iostream>
+#include <fstream>
 
 using namespace cms::Ort;
 
@@ -94,11 +98,14 @@ void DeepDoubleXONNXJetTagsProducer::fillDescriptions(edm::ConfigurationDescript
   using PDCases = edm::ParameterDescriptionCases<std::string>;
   auto flavorCases = [&]() {
     return "BvL" >> (PDPSD("flav_names", std::vector<std::string>{"probQCD", "probHbb"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
+                     //PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V02/BvL_best.onnx"), true)) or
            "CvL" >> (PDPSD("flav_names", std::vector<std::string>{"probQCD", "probHcc"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
+                     //PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true)) or
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V02/CvL_best.onnx"), true)) or
            "CvB" >> (PDPSD("flav_names", std::vector<std::string>{"probHbb", "probHcc"}, true) and
-                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true));
+                     //PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V01/out.onnx"), true));
+                     PDFIP("model_path", FIP("RecoBTag/Combined/data/DeepDoubleX/94X/V02/CvB_best.onnx"), true));
   };
   auto descBvL(desc);
   descBvL.ifValue(edm::ParameterDescription<std::string>("flavor", "BvL", true), flavorCases());
@@ -136,6 +143,7 @@ void DeepDoubleXONNXJetTagsProducer::produce(edm::Event& iEvent, const edm::Even
     auto batch_size = std::count_if(
         tag_infos->begin(), tag_infos->end(), [](const auto& taginfo) { return !taginfo.features().empty(); });
 
+    std::vector<float> etas_; //DEBUG
     std::vector<float> outputs;
     if (batch_size > 0) {
       // init data storage
@@ -149,12 +157,46 @@ void DeepDoubleXONNXJetTagsProducer::produce(edm::Event& iEvent, const edm::Even
       for (const auto& taginfo : *tag_infos) {
         if (!taginfo.features().empty()) {
           make_inputs(idx, taginfo);
+          etas_.push_back(taginfo.jet()->eta()); //DEBUG
           ++idx;
         }
+      }
+      // std::cout << "Session begin" << std::endl;
+      // //DEBUG - print inputs to file
+      // for ( const std::vector<float> &v : data_ )
+      // {
+      //   std::cout << "new_input, per-jet-size: " << v.size()/batch_size <<std::endl;
+      //   for ( float x : v ) std::cout << x << ' ';
+      //   std::cout << std::endl;
+      // }
+
+      // std::cout << "Session end" << std::endl;
+
+      std::ofstream outfile;
+      outfile.open("test.txt", std::ios_base::app); 
+      outfile << iEvent.id().event() <<std::endl;
+      outfile << batch_size <<std::endl;
+      for ( float x : etas_ ) outfile << x << ' ';
+      outfile << std::endl;
+      int _i = 0;
+      for ( const std::vector<float> &v : data_ )
+      {
+        outfile << "input_" << _i <<std::endl;
+        for ( float x : v ) outfile << x << ' ';
+        outfile << std::endl;
+        _i = _i + 1;
       }
 
       // run prediction
       outputs = globalCache()->run(input_names_, data_, output_names_, batch_size)[0];
+      // std::cout << "Oututs" << std::endl;
+      // for ( float x : outputs ) std::cout << x << ' ';
+      // std::cout << std::endl;
+
+      outfile << "outputs" << std::endl;
+      for ( float x : outputs ) outfile << x << ' ';
+      outfile << std::endl;
+
       assert(outputs.size() == flav_names_.size() * batch_size);
     }
 
@@ -243,21 +285,7 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = c_pf_features.btagPf_trackSip2dVal;
     *(++ptr) = c_pf_features.btagPf_trackSip3dSig;
     *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    //dummy
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
-    // *(++ptr) = c_pf_features.btagPf_trackSip3dVal;
+
     *(++ptr) = c_pf_features.deltaR;
     *(++ptr) = c_pf_features.drminsv;
     *(++ptr) = c_pf_features.drsubjet1;
@@ -271,7 +299,6 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = c_pf_features.chi2;
     *(++ptr) = c_pf_features.ptrel;
     *(++ptr) = c_pf_features.quality;   
-     std::cout << "                   cpfXXX" << start + n_features_cpf_ - 1 << ptr << std::endl;
     assert(start + n_features_cpf_ - 1 == ptr);
   }
 
@@ -290,7 +317,6 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = n_pf_features.hadFrac;
     *(++ptr) = n_pf_features.ptrel;
     *(++ptr) = n_pf_features.puppiw;
-    std::cout << "                   npfXXX" << start + n_features_npf_ - 1 << ptr << std::endl;
     assert(start + n_features_npf_ - 1 == ptr);
   }
 
@@ -308,7 +334,6 @@ void DeepDoubleXONNXJetTagsProducer::make_inputs(unsigned i_jet, const reco::Dee
     *(++ptr) = sv_features.ntracks;
     *(++ptr) = sv_features.pt;
     *(++ptr) = sv_features.ptrel;
-    std::cout << "                   nvXXX" << start + n_features_sv_ - 1 << ptr << std::endl;
     assert(start + n_features_sv_ - 1 == ptr);
   }
 }
