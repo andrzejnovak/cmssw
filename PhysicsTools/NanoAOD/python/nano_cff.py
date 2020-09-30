@@ -237,6 +237,8 @@ def nanoAOD_activateVID(process):
     return process
 
 def nanoAOD_addDeepInfoAK8(process, addDeepBTag, addDeepBoostedJet, addDeepDoubleX, addDeepDoubleXV2, addParticleNet, jecPayload):
+    print("XXXXXXXXXXXXXXXXXXXXXX")
+    print(addDeepBTag, addDeepBoostedJet, addDeepDoubleX, addDeepDoubleXV2, addParticleNet, jecPayload)
     _btagDiscriminators=[]
     if addDeepBTag:
         print("Updating process to run DeepCSV btag to AK8 jets")
@@ -246,7 +248,7 @@ def nanoAOD_addDeepInfoAK8(process, addDeepBTag, addDeepBoostedJet, addDeepDoubl
         from RecoBTag.ONNXRuntime.pfDeepBoostedJet_cff import _pfDeepBoostedJetTagsAll as pfDeepBoostedJetTagsAll
         _btagDiscriminators += pfDeepBoostedJetTagsAll
     if addParticleNet:
-        print("Updating process to run ParticleNet before it's included in MiniAOD")
+        print("Updating process to run ParticleNet before it's included in MiniAOD ZZZZZ")
         from RecoBTag.ONNXRuntime.pfParticleNet_cff import _pfParticleNetJetTagsAll as pfParticleNetJetTagsAll
         _btagDiscriminators += pfParticleNetJetTagsAll
     if addDeepDoubleX:
@@ -256,6 +258,7 @@ def nanoAOD_addDeepInfoAK8(process, addDeepBTag, addDeepBoostedJet, addDeepDoubl
             'pfDeepDoubleCvBJetTags:probHcc', \
             'pfMassIndependentDeepDoubleBvLJetTags:probHbb', 'pfMassIndependentDeepDoubleCvLJetTags:probHcc', 'pfMassIndependentDeepDoubleCvBJetTags:probHcc']
     if addDeepDoubleXV2:
+        print("Updating process to run DeepDoubleXv2 on datasets before 11X")
         _btagDiscriminators += [
             'pfMassIndependentDeepDoubleBvLV2JetTags:probHbb',
             'pfMassIndependentDeepDoubleCvLV2JetTags:probHcc',
@@ -322,7 +325,7 @@ def nanoAOD_customizeCommon(process):
         nanoAOD_addDeepDoubleX_switch = True,
         nanoAOD_addParticleNet_switch = True,
         )
-    # for 106Xv1: only needs to run ParticleNet; DeepAK8, DeepDoubleX are already in MiniAOD
+    # for 106Xv1: only needs to run ParticleNet and DDXV2; DeepAK8, DeepDoubleX are already in MiniAOD
     run2_nanoAOD_106Xv1.toModify(
         nanoAOD_addDeepInfoAK8_switch,
         nanoAOD_addDeepDoubleXV2_switch = True,
