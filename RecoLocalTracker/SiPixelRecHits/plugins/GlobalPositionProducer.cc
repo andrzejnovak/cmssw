@@ -35,6 +35,9 @@
 #include "DataFormats/Common/interface/OwnVector.h"
 #include "Geometry/Records/interface/TrackerDigiGeometryRecord.h"
 #include "Geometry/TrackerGeometryBuilder/interface/TrackerGeometry.h"
+#include "Geometry/CommonTopologies/interface/PixelTopology.h"
+#include "Geometry/CommonDetUnit/interface/PixelGeomDetUnit.h"
+#include "DataFormats/TrackerRecHit2D/interface/SiPixelRecHit.h"
 
 
 typedef edm::OwnVector<TrackingRecHit,edm::ClonePolicy<TrackingRecHit> > TrackingRecHitCollection; 
@@ -135,7 +138,7 @@ void GlobalPositionProducer::produce(edm::Event& iEvent, const edm::EventSetup& 
 
   const TrackerGeometry& geometry = iSetup.getData(geomToken_);
 
-  std::unique_ptr<ValueMap<GlobalPoint> > refs; 
+  auto refs = std::make_unique<ValueMap<GlobalPoint>>();
   //refs.reserve(hits.size()); 
 
 
@@ -145,8 +148,20 @@ void GlobalPositionProducer::produce(edm::Event& iEvent, const edm::EventSetup& 
   for (size_t i = 0; i < hits->size(); ++i) 
   {
   	const auto& hit = (*hits)[i];
-  	auto det = geometry.idToDet(hit.geographicalId());
-  	GlobalPoint gp = det->surface().toGlobal(hit.localPosition());
+  	// DetIds not in the loaded geometry (e.g. geometry/input mismatch) get a sentinel point
+  	GlobalPoint gp(-999., -999., -999.);
+  	auto det = dynamic_cast<const PixelGeomDetUnit*>(geometry.idToDetUnit(hit.geographicalId()));
+  	auto pixHit = dynamic_cast<const SiPixelRecHit*>(&hit);
+  	if (det) {
+  	  // The persisted HLT pixel-track hits have zeroed local positions, so recompute from the
+  	  // cluster centroid (no CPE/Lorentz correction) when the cluster collection is available.
+  	  if (pixHit && pixHit->cluster().isNonnull() && pixHit->cluster().isAvailable()) {
+  	    auto const& cl = *pixHit->cluster();
+  	    gp = det->surface().toGlobal(det->specificTopology().localPosition(MeasurementPoint(cl.x(), cl.y())));
+  	  } else {
+  	    gp = det->surface().toGlobal(hit.localPosition());
+  	  }
+  	}
   	values.push_back(gp);
   	//refs->push_back(edm::Ref<TrackingRecHitCollection>(hits, i));
   }
